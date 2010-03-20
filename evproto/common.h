@@ -5,4 +5,16 @@
   TypeName(const TypeName&);                            \
   void operator=(const TypeName&)
 
+namespace google
+{
+namespace protobuf
+{
+}
+}
+
+namespace evproto
+{
+namespace gpb = ::google::protobuf;
+}
+
 #endif  // EVPROTO_COMMON_H

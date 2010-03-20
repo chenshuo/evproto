@@ -10,6 +10,8 @@
 
 #include "evproto/common.h"
 
+#include <google/protobuf/service.h>
+
 #include <stdint.h>
 
 struct evhttp;
@@ -26,6 +28,7 @@ class HttpServer
   HttpServer(EventLoop* loop, uint16_t port);
   ~HttpServer();
   void stop();
+  struct evhttp* evHttp();
 
  private:
   void requestCallback(struct evhttp_request*);
@@ -33,7 +36,7 @@ class HttpServer
 
   EVPROTO_DISALLOW_EVIL_CONSTRUCTORS(HttpServer);
   EventLoop* loop_;
-  struct evhttp* http_;
+  struct evhttp* evhttp_;
   struct evhttp_bound_socket* boundSocket_;
 };
 

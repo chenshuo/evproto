@@ -1,4 +1,4 @@
-package evproto.sudoku;
+package sudoku;
 
 message SudokuRequest {
   required string checkerboard = 1;
