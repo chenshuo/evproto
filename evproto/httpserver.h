@@ -18,7 +18,8 @@ struct evhttp;
 struct evhttp_request;
 struct evhttp_bound_socket;
 
-namespace evproto {
+namespace evproto
+{
 
 class EventLoop;
 

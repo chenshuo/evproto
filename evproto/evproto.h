@@ -10,7 +10,8 @@
 
 #include "evproto/common.h"
 
-namespace evproto {
+namespace evproto
+{
 
 void initialize(int argc, char* argv[]);
 

@@ -16,7 +16,8 @@
 struct evbuffer;
 struct evrpc_status;
 
-namespace evproto {
+namespace evproto
+{
 
 class RpcController : public gpb::RpcController
 {

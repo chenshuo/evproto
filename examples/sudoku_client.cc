@@ -1,4 +1,4 @@
-#include "sudoku.pb.h"
+#include "examples/sudoku.pb.h"
 #include "evproto/eventloop.h"
 #include "evproto/evproto.h"
 #include "evproto/rpcchannel.h"

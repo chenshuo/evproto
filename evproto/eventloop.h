@@ -12,7 +12,8 @@
 
 struct event_base;
 
-namespace evproto {
+namespace evproto
+{
 
 class EventLoop
 {

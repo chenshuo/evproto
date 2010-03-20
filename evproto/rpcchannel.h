@@ -18,7 +18,8 @@ struct evhttp_connection;
 struct evrpc_pool;
 struct evrpc_status;
 
-namespace evproto {
+namespace evproto
+{
 
 class EventLoop;
 

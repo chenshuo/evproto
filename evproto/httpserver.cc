@@ -41,6 +41,11 @@ void HttpServer::stop()
   ::evhttp_del_accept_socket(evhttp_, boundSocket_);
 }
 
+struct evhttp* HttpServer::evHttp()
+{
+  return evhttp_;
+}
+
 void HttpServer::requestCallback(struct evhttp_request* req)
 {
   const char* uri = req->uri;

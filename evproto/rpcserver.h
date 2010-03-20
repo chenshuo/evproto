@@ -12,7 +12,9 @@
 
 #include <google/protobuf/service.h>
 
-struct event_base;
+struct evhttp_connection;
+struct evrpc_base;
+struct evrpc_req_generic;
 
 namespace evproto
 {
@@ -24,15 +26,17 @@ class RpcServer
  public:
   RpcServer(HttpServer*);
   ~RpcServer();
-  void registerService(gpb::Service* service);
+  bool registerService(gpb::Service* service);
   void CallMethod(const gpb::MethodDescriptor* method,
                   gpb::RpcController* controller,
                   const gpb::Message* request,
                   gpb::Message* response,
                   gpb::Closure* done);
  private:
+  static void invokeCallback(struct evrpc_req_generic*, void*);
   EVPROTO_DISALLOW_EVIL_CONSTRUCTORS(RpcServer);
   HttpServer* http_;
+  struct evrpc_base* rpcbase_;
 };
 
 }
