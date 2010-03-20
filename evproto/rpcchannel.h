@@ -10,16 +10,24 @@
 
 #include "evproto/common.h"
 
+#include <vector>
+
 #include <google/protobuf/service.h>
 
-struct event_base;
+struct evhttp_connection;
+struct evrpc_pool;
+struct evrpc_status;
 
 namespace evproto {
 
+class EventLoop;
+
+// TODO allow async DNS resolving
 class RpcChannel : public gpb::RpcChannel
 {
  public:
-  RpcChannel();
+  RpcChannel(EventLoop* loop);
+  bool addServer(const char* host, uint16_t port);
   virtual ~RpcChannel();
   virtual void CallMethod(const gpb::MethodDescriptor* method,
                           gpb::RpcController* controller,
@@ -28,6 +36,9 @@ class RpcChannel : public gpb::RpcChannel
                           gpb::Closure* done);
  private:
   EVPROTO_DISALLOW_EVIL_CONSTRUCTORS(RpcChannel);
+  EventLoop* const loop_;
+  struct evrpc_pool* const pool_;
+  std::vector<struct evhttp_connection*> addedConns_;
 };
 
 }

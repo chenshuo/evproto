@@ -3,6 +3,7 @@ set(evproto_SRCS
   evproto.cc
   httpserver.cc
   rpcchannel.cc
+  rpccontroller.cc
   rpcserver.cc
   )
 

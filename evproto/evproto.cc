@@ -64,8 +64,8 @@ void initialize(int argc, char* argv[])
 #endif
 
 #ifndef NDEBUG
-  ::evthread_enable_lock_debuging();
-  ::event_enable_debug_mode();
+  // ::evthread_enable_lock_debuging();
+  // ::event_enable_debug_mode();
 #endif
 
   CHECK_EQ(LIBEVENT_VERSION_NUMBER, ::event_get_version_number())
