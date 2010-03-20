@@ -17,10 +17,11 @@ set(CXX_FLAGS
  -rdynamic
  -L/usr/local/lib
  -levent_core
+ -levent_extra
  -levent_pthreads
  -lgflags
  -lglog
- #-lprotobuf
+ -lprotobuf
  -lpthread
  -Wl,--rpath
  -Wl,/usr/local/lib

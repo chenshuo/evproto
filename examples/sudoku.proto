@@ -1,0 +1,15 @@
+package evproto.sudoku;
+
+message SudokuRequest {
+  required string checkerboard = 1;
+}
+
+message SudokuResponse {
+  required bool solved = 1;
+  optional string checkerboard = 2;
+}
+
+service SudokuService {
+  rpc Solve (SudokuRequest) returns (SudokuResponse);
+}
+

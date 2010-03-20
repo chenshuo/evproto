@@ -15,23 +15,23 @@ namespace evproto
 {
 
 EventLoop::EventLoop()
-  : base_(CHECK_NOTNULL(event_base_new()))
+  : base_(CHECK_NOTNULL(::event_base_new()))
 {
   LOG(INFO) << "Using Libevent with backend method "
-            << event_base_get_method(base_);
+            << ::event_base_get_method(base_);
 }
 
 EventLoop::~EventLoop()
 {
-  event_base_free(base_);
+  ::event_base_free(base_);
 }
 
 int EventLoop::loop()
 {
-  return event_base_loop(base_, 0);
+  return ::event_base_loop(base_, 0);
 }
 
-struct event_base* EventLoop::getEventBase()
+struct event_base* EventLoop::eventBase()
 {
   return base_;
 }

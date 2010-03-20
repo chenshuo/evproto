@@ -20,7 +20,7 @@ class EventLoop
   EventLoop();
   ~EventLoop();
   int loop();
-  struct event_base* getEventBase();
+  struct event_base* eventBase();
  private:
   EVPROTO_DISALLOW_EVIL_CONSTRUCTORS(EventLoop);
   struct event_base* const base_;
