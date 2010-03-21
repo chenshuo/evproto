@@ -1,0 +1,281 @@
+diff -ru libevent-2.0.4-alpha/event_rpcgen.py libevent-2.0.4-alpha-protobuf-rpc/event_rpcgen.py
+--- libevent-2.0.4-alpha/event_rpcgen.py	2009-12-12 02:56:56.000000000 +0800
++++ libevent-2.0.4-alpha-protobuf-rpc/event_rpcgen.py	2010-03-21 11:06:40.000000000 +0800
+@@ -116,7 +116,7 @@
+         print >>file, '};\n'
+ 
+         print >>file, \
+-"""struct %(name)s *%(name)s_new(void);
++"""struct %(name)s *%(name)s_new(void *);
+ void %(name)s_free(struct %(name)s *);
+ void %(name)s_clear(struct %(name)s *);
+ void %(name)s_marshal(struct evbuffer *, const struct %(name)s *);
+@@ -155,7 +155,7 @@
+         # Creation
+         print >>file, (
+             'struct %(name)s *\n'
+-            '%(name)s_new(void)\n'
++            '%(name)s_new(void *unused)\n'
+             '{\n'
+             '  struct %(name)s *tmp;\n'
+             '  if ((tmp = malloc(sizeof(struct %(name)s))) == NULL) {\n'
+@@ -770,7 +770,7 @@
+ 
+     def CodeArrayAdd(self, varname, value):
+         code = [
+-            '%(varname)s = %(refname)s_new();',
++            '%(varname)s = %(refname)s_new(NULL);',
+             'if (%(varname)s == NULL)',
+             '  goto error;' ]
+ 
+@@ -817,7 +817,7 @@
+             self._struct.Name(), self._ctype),
+                  '{',
+                  '  if (msg->%s_set != 1) {' % name,
+-                 '    msg->%s_data = %s_new();' % (name, self._refname),
++                 '    msg->%s_data = %s_new(NULL);' % (name, self._refname),
+                  '    if (msg->%s_data == NULL)' % name,
+                  '      return (-1);',
+                  '    msg->%s_set = 1;' % name,
+@@ -838,7 +838,7 @@
+      %(refname)s_clear(msg->%(name)s_data);
+      msg->%(name)s_set = 0;
+    } else {
+-     msg->%(name)s_data = %(refname)s_new();
++     msg->%(name)s_data = %(refname)s_new(NULL);
+      if (msg->%(name)s_data == NULL) {
+        event_warn("%%s: %(refname)s_new()", __func__);
+        goto error;
+@@ -877,7 +877,7 @@
+             'var' : var_name }))
+ 
+     def CodeUnmarshal(self, buf, tag_name, var_name, var_len):
+-        code = ['%(var)s = %(refname)s_new();',
++        code = ['%(var)s = %(refname)s_new(NULL);',
+                 'if (%(var)s == NULL)',
+                 '  return (-1);',
+                 'if (evtag_unmarshal_%(refname)s(%(buf)s, %(tag)s, '
+diff -ru libevent-2.0.4-alpha/evrpc.c libevent-2.0.4-alpha-protobuf-rpc/evrpc.c
+--- libevent-2.0.4-alpha/evrpc.c	2010-02-27 11:16:14.000000000 +0800
++++ libevent-2.0.4-alpha-protobuf-rpc/evrpc.c	2010-03-21 10:53:06.000000000 +0800
+@@ -339,7 +339,7 @@
+ 		goto error;
+ 
+ 	/* let's check that we can parse the request */
+-	rpc_state->request = rpc->request_new();
++	rpc_state->request = rpc->request_new(rpc->request_new_arg);
+ 	if (rpc_state->request == NULL)
+ 		goto error;
+ 
+@@ -351,7 +351,7 @@
+ 
+ 	/* at this point, we have a well formed request, prepare the reply */
+ 
+-	rpc_state->reply = rpc->reply_new();
++	rpc_state->reply = rpc->reply_new(rpc->reply_new_arg);
+ 	if (rpc_state->reply == NULL)
+ 		goto error;
+ 
+@@ -1069,9 +1069,9 @@
+ /** Takes a request object and fills it in with the right magic */
+ static struct evrpc *
+ evrpc_register_object(const char *name,
+-    void *(*req_new)(void), void (*req_free)(void *),
++    void *(*req_new)(void*), void *req_new_arg, void (*req_free)(void *),
+     int (*req_unmarshal)(void *, struct evbuffer *),
+-    void *(*rpl_new)(void), void (*rpl_free)(void *),
++    void *(*rpl_new)(void*), void *rpl_new_arg, void (*rpl_free)(void *),
+     int (*rpl_complete)(void *),
+     void (*rpl_marshal)(struct evbuffer *, void *))
+ {
+@@ -1084,9 +1084,11 @@
+ 		return (NULL);
+ 	}
+ 	rpc->request_new = req_new;
++	rpc->request_new_arg = req_new_arg;
+ 	rpc->request_free = req_free;
+ 	rpc->request_unmarshal = req_unmarshal;
+ 	rpc->reply_new = rpl_new;
++	rpc->reply_new_arg = rpl_new_arg;
+ 	rpc->reply_free = rpl_free;
+ 	rpc->reply_complete = rpl_complete;
+ 	rpc->reply_marshal = rpl_marshal;
+@@ -1096,15 +1098,15 @@
+ int
+ evrpc_register_generic(struct evrpc_base *base, const char *name,
+     void (*callback)(struct evrpc_req_generic *, void *), void *cbarg,
+-    void *(*req_new)(void), void (*req_free)(void *),
++    void *(*req_new)(void *), void *req_new_arg, void (*req_free)(void *),
+     int (*req_unmarshal)(void *, struct evbuffer *),
+-    void *(*rpl_new)(void), void (*rpl_free)(void *),
++    void *(*rpl_new)(void *), void *rpl_new_arg, void (*rpl_free)(void *),
+     int (*rpl_complete)(void *),
+     void (*rpl_marshal)(struct evbuffer *, void *))
+ {
+ 	struct evrpc* rpc =
+-	    evrpc_register_object(name, req_new, req_free, req_unmarshal,
+-		rpl_new, rpl_free, rpl_complete, rpl_marshal);
++	    evrpc_register_object(name, req_new, req_new_arg, req_free, req_unmarshal,
++		rpl_new, rpl_new_arg, rpl_free, rpl_complete, rpl_marshal);
+ 	if (rpc == NULL)
+ 		return (-1);
+ 	evrpc_register_rpc(base, rpc,
+diff -ru libevent-2.0.4-alpha/include/event2/rpc.h libevent-2.0.4-alpha-protobuf-rpc/include/event2/rpc.h
+--- libevent-2.0.4-alpha/include/event2/rpc.h	2010-02-27 11:16:15.000000000 +0800
++++ libevent-2.0.4-alpha-protobuf-rpc/include/event2/rpc.h	2010-03-21 11:00:44.000000000 +0800
+@@ -315,10 +315,10 @@
+ #define EVRPC_REGISTER(base, name, request, reply, callback, cbarg)	\
+ 	evrpc_register_generic(base, #name,				\
+ 	    (void (*)(struct evrpc_req_generic *, void *))callback, cbarg, \
+-	    (void *(*)(void))request##_new,				\
++	    (void *(*)(void *))request##_new, NULL,			\
+ 	    (void (*)(void *))request##_free,				\
+ 	    (int (*)(void *, struct evbuffer *))request##_unmarshal,	\
+-	    (void *(*)(void))reply##_new, \
++	    (void *(*)(void *))reply##_new, NULL,			\
+ 	    (void (*)(void *))reply##_free, \
+ 	    (int (*)(void *))reply##_complete, \
+ 	    (void (*)(struct evbuffer *, void *))reply##_marshal)
+@@ -571,9 +571,9 @@
+ int
+ evrpc_register_generic(struct evrpc_base *base, const char *name,
+     void (*callback)(struct evrpc_req_generic *, void *), void *cbarg,
+-    void *(*req_new)(void), void (*req_free)(void *),
++    void *(*req_new)(void *), void *req_new_arg, void (*req_free)(void *),
+     int (*req_unmarshal)(void *, struct evbuffer *),
+-    void *(*rpl_new)(void), void (*rpl_free)(void *),
++    void *(*rpl_new)(void *), void *rpl_new_arg, void (*rpl_free)(void *),
+     int (*rpl_complete)(void *),
+     void (*rpl_marshal)(struct evbuffer *, void *));
+ 
+diff -ru libevent-2.0.4-alpha/include/event2/rpc_struct.h libevent-2.0.4-alpha-protobuf-rpc/include/event2/rpc_struct.h
+--- libevent-2.0.4-alpha/include/event2/rpc_struct.h	2009-12-12 02:56:56.000000000 +0800
++++ libevent-2.0.4-alpha-protobuf-rpc/include/event2/rpc_struct.h	2010-03-21 10:45:20.000000000 +0800
+@@ -63,7 +63,8 @@
+ 	const char* uri;
+ 
+ 	/* creates a new request structure */
+-	void *(*request_new)(void);
++	void *(*request_new)(void*);
++	void *request_new_arg;
+ 
+ 	/* frees the request structure */
+ 	void (*request_free)(void *);
+@@ -72,9 +73,10 @@
+ 	int (*request_unmarshal)(void *, struct evbuffer *);
+ 
+ 	/* creates a new reply structure */
+-	void *(*reply_new)(void);
++	void *(*reply_new)(void*);
++	void *reply_new_arg;
+ 
+-	/* creates a new reply structure */
++	/* frees the reply structure */
+ 	void (*reply_free)(void *);
+ 
+ 	/* verifies that the reply is valid */
+diff -ru libevent-2.0.4-alpha/test/regress.gen.c libevent-2.0.4-alpha-protobuf-rpc/test/regress.gen.c
+--- libevent-2.0.4-alpha/test/regress.gen.c	2010-02-04 12:27:53.000000000 +0800
++++ libevent-2.0.4-alpha-protobuf-rpc/test/regress.gen.c	2010-03-21 11:06:43.000000000 +0800
+@@ -39,7 +39,7 @@
+ };
+ 
+ struct msg *
+-msg_new(void)
++msg_new(void *unused)
+ {
+   struct msg *tmp;
+   if ((tmp = malloc(sizeof(struct msg))) == NULL) {
+@@ -82,7 +82,7 @@
+     msg->run_data = new_data;
+     msg->run_num_allocated = tobe_allocated;
+   }
+-  msg->run_data[msg->run_length - 1] = run_new();
++  msg->run_data[msg->run_length - 1] = run_new(NULL);
+   if (msg->run_data[msg->run_length - 1] == NULL)
+     goto error;
+   msg->run_set = 1;
+@@ -125,7 +125,7 @@
+      kill_clear(msg->attack_data);
+      msg->attack_set = 0;
+    } else {
+-     msg->attack_data = kill_new();
++     msg->attack_data = kill_new(NULL);
+      if (msg->attack_data == NULL) {
+        event_warn("%s: kill_new()", __func__);
+        goto error;
+@@ -207,7 +207,7 @@
+ msg_attack_get(struct msg *msg, struct kill* *value)
+ {
+   if (msg->attack_set != 1) {
+-    msg->attack_data = kill_new();
++    msg->attack_data = kill_new(NULL);
+     if (msg->attack_data == NULL)
+       return (-1);
+     msg->attack_set = 1;
+@@ -333,7 +333,7 @@
+ 
+         if (tmp->attack_set)
+           return (-1);
+-        tmp->attack_data = kill_new();
++        tmp->attack_data = kill_new(NULL);
+         if (tmp->attack_data == NULL)
+           return (-1);
+         if (evtag_unmarshal_kill(evbuf, MSG_ATTACK, tmp->attack_data) == -1) {
+@@ -348,7 +348,7 @@
+         if (msg_run_add(tmp) == NULL)
+           return (-1);
+         --tmp->run_length;
+-        tmp->run_data[tmp->run_length] = run_new();
++        tmp->run_data[tmp->run_length] = run_new(NULL);
+         if (tmp->run_data[tmp->run_length] == NULL)
+           return (-1);
+         if (evtag_unmarshal_run(evbuf, MSG_RUN, tmp->run_data[tmp->run_length]) == -1) {
+@@ -434,7 +434,7 @@
+ };
+ 
+ struct kill *
+-kill_new(void)
++kill_new(void *unused)
+ {
+   struct kill *tmp;
+   if ((tmp = malloc(sizeof(struct kill))) == NULL) {
+@@ -717,7 +717,7 @@
+ };
+ 
+ struct run *
+-run_new(void)
++run_new(void *unused)
+ {
+   struct run *tmp;
+   if ((tmp = malloc(sizeof(struct run))) == NULL) {
+diff -ru libevent-2.0.4-alpha/test/regress.gen.h libevent-2.0.4-alpha-protobuf-rpc/test/regress.gen.h
+--- libevent-2.0.4-alpha/test/regress.gen.h	2010-02-04 12:27:53.000000000 +0800
++++ libevent-2.0.4-alpha-protobuf-rpc/test/regress.gen.h	2010-03-21 11:06:43.000000000 +0800
+@@ -50,7 +50,7 @@
+   ev_uint8_t run_set;
+ };
+ 
+-struct msg *msg_new(void);
++struct msg *msg_new(void *);
+ void msg_free(struct msg *);
+ void msg_clear(struct msg *);
+ void msg_marshal(struct evbuffer *, const struct msg *);
+@@ -104,7 +104,7 @@
+   ev_uint8_t how_often_set;
+ };
+ 
+-struct kill *kill_new(void);
++struct kill *kill_new(void *);
+ void kill_free(struct kill *);
+ void kill_clear(struct kill *);
+ void kill_marshal(struct evbuffer *, const struct kill *);
+@@ -175,7 +175,7 @@
+   ev_uint8_t other_numbers_set;
+ };
+ 
+-struct run *run_new(void);
++struct run *run_new(void *);
+ void run_free(struct run *);
+ void run_clear(struct run *);
+ void run_marshal(struct evbuffer *, const struct run *);

@@ -77,11 +77,17 @@ class RpcController : public gpb::RpcController
   // NotifyOnCancel() must be called no more than once per request.
   virtual void NotifyOnCancel(gpb::Closure* callback) {}
 
+  // for client side
   static void statusCallback(struct evrpc_status *status,
       void* request, void* response, void *arg);
   static void marshal(struct evbuffer*, void*);
-  static void clear(void*);
   static int unmarshal(void*, struct evbuffer*);
+  static void clear(void*);
+
+  // for server side
+  static void* newMessage(void*);
+  static void deleteMessage(void*);
+  static int complete(void*);
 
  private:
   EVPROTO_DISALLOW_EVIL_CONSTRUCTORS(RpcController);
