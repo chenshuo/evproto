@@ -145,18 +145,6 @@ index 3141156..1586c8a 100644
  	void (*reply_free)(void *);
  
  	/* verifies that the reply is valid */
-diff --git a/libevent.pc b/libevent.pc
-index 31713a8..5550a03 100644
---- a/libevent.pc
-+++ b/libevent.pc
-@@ -11,6 +11,6 @@ Version: 2.0.4-alpha
- Requires:
- Conflicts:
- Libs: -L${libdir} -levent
--Libs.private: 
-+Libs.private: -lrt 
- Cflags: -I${includedir}
- 
 diff --git a/test/regress.gen.c b/test/regress.gen.c
 index 59fd74b..cf2e52d 100644
 --- a/test/regress.gen.c
