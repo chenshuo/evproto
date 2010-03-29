@@ -12,6 +12,16 @@ namespace sudoku
 
 class SudokuServiceImpl : public SudokuService
 {
+ public:
+  virtual void Solve(::google::protobuf::RpcController* controller,
+                       const ::sudoku::SudokuRequest* request,
+                       ::sudoku::SudokuResponse* response,
+                       ::google::protobuf::Closure* done)
+  {
+    LOG(INFO) << "SudokuServiceImpl::Solve";
+    response->set_solved(true);
+    done->Run();
+  }
 };
 
 }

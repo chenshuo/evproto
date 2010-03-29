@@ -10,6 +10,11 @@
 #include <iostream>
 using namespace std;
 
+void solved(sudoku::SudokuResponse* resp)
+{
+  LOG(INFO) << resp->solved();
+}
+
 int main(int argc, char* argv[])
 {
   evproto::initialize(argc, argv);
@@ -25,7 +30,7 @@ int main(int argc, char* argv[])
   sudoku::SudokuRequest req;
   req.set_checkerboard("1312313.312");
   sudoku::SudokuResponse resp;
-  stub.Solve(&controller, &req, &resp, NULL);
+  stub.Solve(&controller, &req, &resp, evproto::gpb::NewCallback(solved, &resp));
   loop.loop();
 }
 

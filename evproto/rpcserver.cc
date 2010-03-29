@@ -33,9 +33,20 @@ RpcServer::~RpcServer()
   ::evrpc_free(rpcbase_);
 }
 
-void RpcServer::invokeCallback(struct evrpc_req_generic* req, void*)
+void RpcServer::invokeCallback(struct evrpc_req_generic* req, void* arg)
 {
-  //evbuffer_add(req->rpc_data, "hello", 5);
+  RpcMethod* rpc= static_cast<RpcMethod*>(arg);
+  rpc->service->CallMethod(
+      rpc->method,
+      NULL,
+      static_cast<const gpb::Message*>(::evrpc_get_request(req)),
+      static_cast<gpb::Message*>(::evrpc_get_reply(req)),
+      gpb::NewCallback(/*this,*/ &RpcServer::doneCallback, req)
+      );
+}
+
+void RpcServer::doneCallback(struct evrpc_req_generic* req)
+{
   evrpc_request_done(req);
 }
 
@@ -43,18 +54,22 @@ bool RpcServer::registerService(gpb::Service* service)
 {
   const gpb::ServiceDescriptor* desc = service->GetDescriptor();
   LOG(INFO) << "registering service" << desc->full_name();
-  
+
   bool succeed = true;
   int methodCount = desc->method_count();
   for (int i = 0; i < methodCount; ++i)
   {
     const gpb::MethodDescriptor* method = desc->method(i);
     LOG(INFO) << "registering rpc call " << method->full_name();
+    RpcMethod* rpc = new RpcMethod;
+    rpc->service = service;
+    rpc->method = method;
+    toDelete_.push_back(rpc);
     int ret = evrpc_register_generic(
         rpcbase_,
         method->full_name().c_str(),
         &RpcServer::invokeCallback,
-        const_cast<gpb::MethodDescriptor*>(method),
+        rpc,
         &RpcController::newMessage,
         const_cast<gpb::Message*>(&service->GetRequestPrototype(method)),
         &RpcController::deleteMessage,

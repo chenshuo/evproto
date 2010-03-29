@@ -34,6 +34,8 @@ void RpcController::statusCallback(
       void *arg)
 {
   VLOG(0) << "statusCallback " << status->error;
+  gpb::Closure* closure = static_cast<gpb::Closure*>(arg);
+  closure->Run();
 }
 
 void RpcController::marshal(struct evbuffer* buf, void* arg)

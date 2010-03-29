@@ -10,6 +10,7 @@
 
 #include "evproto/common.h"
 
+#include <vector>
 #include <google/protobuf/service.h>
 
 struct evhttp_connection;
@@ -27,16 +28,19 @@ class RpcServer
   RpcServer(HttpServer*);
   ~RpcServer();
   bool registerService(gpb::Service* service);
-  void CallMethod(const gpb::MethodDescriptor* method,
-                  gpb::RpcController* controller,
-                  const gpb::Message* request,
-                  gpb::Message* response,
-                  gpb::Closure* done);
+
  private:
   static void invokeCallback(struct evrpc_req_generic*, void*);
+  static void doneCallback(struct evrpc_req_generic*);
   EVPROTO_DISALLOW_EVIL_CONSTRUCTORS(RpcServer);
   HttpServer* http_;
   struct evrpc_base* rpcbase_;
+  struct RpcMethod
+  {
+    gpb::Service* service;
+    const gpb::MethodDescriptor* method;
+  };
+  std::vector<RpcMethod*> toDelete_;
 };
 
 }
