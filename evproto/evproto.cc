@@ -11,6 +11,7 @@
 
 #include <gflags/gflags.h>
 #include <glog/logging.h>
+#include <google/protobuf/message.h>
 
 #include <event2/event.h>
 #include <event2/thread.h>
@@ -46,18 +47,25 @@ void eventLogToGlog(int severity, const char *msg)
   }
 }
 
+void protobufLogHandler(google::protobuf::LogLevel level, const char* filename, int line,
+                        const std::string& message)
+{
+  google::LogMessage(filename, line, level).stream() << message;
+}
+
 void eventFatal(int err)
 {
   LOG(FATAL) << "libevent2 fatal " << err;
 }
 
-}
+} // namespace internal
 
 // TODO: pass back modified argc and argv.
 void initialize(int argc, char* argv[])
 {
   google::InitGoogleLogging(argv[0]);
   ::event_set_log_callback(internal::eventLogToGlog);
+  google::protobuf::SetLogHandler(internal::protobufLogHandler);
 
 #if EVTHREAD_USE_WINDOWS_THREADS_IMPLEMENTED
   CHECK_EQ(::evthread_use_windows_threads(), 0);
