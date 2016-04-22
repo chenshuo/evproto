@@ -1,0 +1,1 @@
+A simplistic implementation of protocol buffers RPC with libevent2.
